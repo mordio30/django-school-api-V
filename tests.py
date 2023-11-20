@@ -9,16 +9,16 @@ from django.db import IntegrityError
 
 ## PART I
 class Test_student(TestCase):
-    def setUp(self):
-        curr_student = Student.objects.create(
-            name="Johnny H. Harris",
-            student_email="thisIsMyEmail@school.com",
-            personal_email="thisIsMyEmail@gmail.com",
-            locker_number=108,
-            locker_combination="11-11-11",
-            good_student=False,
-        )
-        curr_student.save()
+    # def setUp(self):
+    #     curr_student = Student.objects.create(
+    #         name="Johnny H. Harris",
+    #         student_email="thisIsMyEmail@school.com",
+    #         personal_email="thisIsMyEmail@gmail.com",
+    #         locker_number=108,
+    #         locker_combination="11-11-11",
+    #         good_student=False,
+    #     )
+    #     curr_student.save()
 
     def test_001_student_with_improper_good_student_field(self):
         try:
@@ -124,6 +124,14 @@ class Test_student(TestCase):
 
     def test_007_student_with_repeated_student_email(self):
         try:
+            Student.objects.create(
+                name="Johnny H. Harris",
+                student_email="thisIsMyEmail@school.com",
+                personal_email="myOtherEmail@gmail.com",
+                locker_number=119,
+                locker_combination="11-11-11",
+                good_student=False,
+            )
             new_student = Student.objects.create(
                 name="Johnny H. Harris",
                 student_email="thisIsMyEmail@school.com",
@@ -135,15 +143,26 @@ class Test_student(TestCase):
             new_student.full_clean()
             self.fail()
         except IntegrityError as e:
-            # print(e)
-            self.assert_("student_app_student_student_email_key" in str(e))
+            # print("\n\n\n", e, "\n\n\n")
+            self.assert_(
+                'duplicate key value violates unique constraint "student_app_student_student_email'
+                in str(e)
+            )
 
     def test_008_student_with_repeated_personal_email(self):
         try:
+            Student.objects.create(
+                name="Johnny H. Harris",
+                student_email="thisIsMyOtherEmail@school.com",
+                personal_email="myEmail@gmail.com",
+                locker_number=119,
+                locker_combination="11-11-11",
+                good_student=False,
+            )
             new_student = Student.objects.create(
                 name="Johnny H. Harris",
-                student_email="IsMyEmail@school.com",
-                personal_email="thisIsMyEmail@gmail.com",
+                student_email="thisIsMyEmail@school.com",
+                personal_email="myEmail@gmail.com",
                 locker_number=109,
                 locker_combination="11-11-11",
                 good_student=False,
@@ -151,11 +170,22 @@ class Test_student(TestCase):
             new_student.full_clean()
             self.fail()
         except IntegrityError as e:
-            # print(e)
-            self.assert_("student_app_student_personal_email_key" in str(e))
+            # print("\n\n\n", e, "\n\n\n")
+            self.assert_(
+                'duplicate key value violates unique constraint "student_app_student_personal_email'
+                in str(e)
+            )
 
     def test_009_student_with_repeated_locker_number(self):
         try:
+            Student.objects.create(
+                name="Johnny H. Harris",
+                student_email="IsmyOEmail@school.com",
+                personal_email="otIsMyEmail@gmail.com",
+                locker_number=108,
+                locker_combination="11-11-11",
+                good_student=False,
+            )
             new_student = Student.objects.create(
                 name="Johnny H. Harris",
                 student_email="IsyEmail@school.com",
