@@ -9,16 +9,6 @@ from django.db import IntegrityError
 
 ## PART I
 class Test_student(TestCase):
-    # def setUp(self):
-    #     curr_student = Student.objects.create(
-    #         name="Johnny H. Harris",
-    #         student_email="thisIsMyEmail@school.com",
-    #         personal_email="thisIsMyEmail@gmail.com",
-    #         locker_number=108,
-    #         locker_combination="11-11-11",
-    #         good_student=False,
-    #     )
-    #     curr_student.save()
 
     def test_001_student_with_improper_good_student_field(self):
         try:
