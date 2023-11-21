@@ -1,6 +1,6 @@
 # School API III
 
-By the end of this assignment you will have a fully serviceable CRUD API with user authentication capabilities that will allow School staff to easily manage students and schollastic equipment.
+By the end of this assignment you will have a fully serviceable CRUD API with user authentication capabilities that will allow School staff to easily manage students and scholastic equipment.
 
 ## Student Model
 
@@ -17,8 +17,11 @@ In this assignment we will extend the application of the Student Models fields b
 
 - Custom Validators
   - validate_name_format: Only accepts string in the following format "First M. Last"
+    - Validation Error: 'Name must be in the format "First Middle Initial. Last"'
   - validate_school_email: Only accepts string ending with "@school.com"
+    - Validation Error: 'Invalid school email format. Please use an email ending with "@school.com".'
   - validate_combination_format: Only accepts string in the following format "12-12-12" (Ensures there are numbers only)
+    - Validation Error: 'Combination must be in the format "12-12-12"'
 
 ## Running Tests
 
