@@ -1,28 +1,24 @@
+# School API III
 
-# School API II
-
-By the end of this assignment you will have a fully serviceable CRUD API with user authentication capabilities that will allow School staff to easily manage students and scholastic equipment.
+By the end of this assignment you will have a fully serviceable CRUD API with user authentication capabilities that will allow School staff to easily manage students and schollastic equipment.
 
 ## Student Model
 
-In this assignment we will extend the application of the Student Models fields by specifying which fields should or should not be unique and assigning default values.
+In this assignment we will extend the application of the Student Models fields by validating data entry to either custom or built in validators.
 
-| field            | required |type |example data  | unique | default |
-| ----------------- | -----|-------|------------- | --------| ------- |
-| name | True |string | John W. Watson | False | None |
-| student_email | True | string | johnnyBoy@school.com | True | None |
-| personal_email | False | string | johnnyBoy@gmail.com | True | None |
-| locker_number | True |int |137 | True | 110 |
-| locker_combination | True |string |37-68-98 | False | "12-12-12"|
-| good_student | True |boolean | True | False | True |
+| field     | required |type |example data  | unique | default | validator/s |
+| --------- | -----|-------|------------- | --------| ------- | ----------- |
+| name | True |string | John W. Watson | False | None | custom regex format |
+| student_email | True | string | johnnyBoy@school.com | True | None | custom regex to end in '@school.com' |
+| personal_email | False | string | johnnyBoy@gmail.com | True | None | None |
+| locker_number | True |int |137 | True | 110 | MinVal = 1 and MaxVal = 200 |
+| locker_combination | True |string |37-68-98 | False | "12-12-12"| custom regex format |
+| good_student | True |boolean | True | False | True | None |
 
-## Student Model Methods
-
-Now that we've added some more details to our student table we can begin adding some methods to this model class:
-
-- str__ Method:    Returns student name, student email, and locker number as such "John W. Watson - johnnyBoy@school.com - 137"
-- locker_reassignment method: Takes in an int representing the new locker number and will change a students "locker_number" property to said value
-- student_status method: Takes in a bool representing if a student is a good student and changes a students "good_student" property to said value
+- Custom Validators
+  - validate_name_format: Only accepts string in the following format "First M. Last"
+  - validate_school_email: Only accepts string ending with "@school.com"
+  - validate_combination_format: Only accepts string in the following format "12-12-12" (Ensures there are numbers only)
 
 ## Running Tests
 
