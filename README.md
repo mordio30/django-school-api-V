@@ -14,10 +14,15 @@ In this assignment we will extend the application of the Student Models fields b
 | locker_number      | True     | int     | 137                  | True   | 110        | MinVal = 1 and MaxVal = 200          |              |
 | locker_combination | True     | string  | 37-68-98             | False  | "12-12-12" | custom regex format                  |              |
 | good_student       | True     | boolean | True                 | False  | True       | None                                 |              |
-| classes            | True     | MtM     | [1,2,3]              | False  | None       | 0 > x < 8                            | students     |
+| subjects            | True     | MtM     | [1,2,3]              | False  | None       | 0 < x < 8                            | students     |
 
-- Validators
-  - clean() method: should also ensure that a Student has more than 0 and less than 8 classes.
+- Methods:
+  - add_subject method: ensures the student has less than 8 subjects before adding a subject
+    - Parameter: subject_id (Subject class PK)
+    - Exception: "This students class schedule is full!"
+  - remove_subject method: ensures the student has at least 1 class before removing the class.
+    - Parameter: subject_id (Subject class PK)
+    - Exception: "This students class schedule is empty!"
 
 ## Subject Model
 
@@ -25,20 +30,23 @@ In this assignment we will implement the Subject Model to allow Students to take
 
 | field     | required | type   | example data    | unique | default   | validator/s         |
 | --------- | -------- | ------ | --------------- | ------ | --------- | ------------------- |
-| subject   | True     | string | Intro to Python | True   | None      | custom regex format |
+| subject_name   | True     | string | Intro to Python | True   | None      | custom regex format |
 | professor | True     | string | Mr. Cahan       | False  | Mr. Cahan | custom regex format |
 | students  | True     | MtM    | [1,2,3]         | False  | None      | 0 > x < 31          |
 
 - Validators
 
   - validate_subject_format: Ensures only string in Title() format is accepted
+    - Exception: "Subject must be in title case format."
   - validate_professor_name: Ensures only string in the following format "Professor John" is accepted
-  - clean(): Will ensure every class has at least 1 and no more than 30 student
+    - Exception: 'Professor name must be in the format "Professor Adam".'
 
 - Methods:
   - \_\_str\_\_ : returns "{subject} - {professor} - {students count}"
-  - add_a_student: Takes in a Students pk||id and adds it to the students relationship
-  - drop_a_student: Takes in a Students pk||id and drops it from the students relationship along with the students grade
+  - add_a_student: Takes in a Students pk||id and adds it to the students relationship if the subject has less than 31 students
+    - Exception: "This subject is full!"
+  - drop_a_student: Takes in a Students pk||id and drops it from the students relationship along with the students grade if subject has at least 1 student within it
+    - Exception: "This subject is empty!"
 
 ## Grade Model
 
@@ -46,15 +54,15 @@ In this assignment we will implement the Grade Model to give each student taking
 
 | field   | required | type    | example data | unique | default | validator/s                |
 | ------- | -------- | ------- | ------------ | ------ | ------- | -------------------------- |
-| grade   | True     | decimal | 100          | False  | 100     | MaxVal = 100 && MinVal = 1 |
-| a_class | True     | FKR     | 1            | False  | None    | None                       |
-| student | True     | FKR     | 1            | False  | None    | None                       |
+| grade   | True     | decimal | 100          | False  | 100     | MaxVal = 100.00 && MinVal = 0.00 |
+| a_subject | False     | FKR     | 1            | False  | None    | None                       |
+| student | False     | FKR     | 1            | False  | None    | None                       |
 
 ## Creating New Apps
 
 In this assignment we will create 2 new apps:
 
-- class_app
+- subject_app
 - grade_app
 
 ```bash
@@ -74,3 +82,7 @@ Delete all the test files inside of each individual application. Add the `tests`
 - `.` means a test passed
 - `E` means an unhandled error populated on a test
 - `F` means a test completely failed to run
+
+## Considerations
+
+You just made some changes to your student model, meaning you may have to adjust your tests regarding `serializers` to match the new output. Ensure to write serializers and validators to the best of your ability for all apps.

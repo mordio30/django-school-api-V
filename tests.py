@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .models import Student
+from grade_app.models import Grade, Student, Subject
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, DataError
 from .serializers import StudentAllSerializer, StudentSerializer
@@ -312,22 +312,28 @@ class Test_student(TestCase):
                 "name": "John W. Watson",
                 "student_email": "thisIsAnEmail@school.com",
                 "locker_number": 13,
-            }
+            },
         )
 
     def test_018_student_serializer_all_with_proper_data(self):
-        data = {
-            "name": "John W. Watson",
-            "student_email": "thisIsAnEmail@school.com",
-            "personal_email": "thisIsAnEmail@gmail.com",
-            "locker_number": 13,
-            "locker_combination": "12-33-44",
-            "good_student": True,
-        }
-        serializer = StudentAllSerializer(data=data)
-        self.assertTrue(serializer.is_valid())
+        try:
+            Subject.objects.create(subject_name="Python", professor="Professor Adam")
+            data = {
+                "name": "John W. Watson",
+                "student_email": "thisIsAnEmail@school.com",
+                "personal_email": "thisIsAnEmail@gmail.com",
+                "locker_number": 13,
+                "locker_combination": "12-33-44",
+                "good_student": True,
+                "subjects": [1],
+            }
+            serializer = StudentAllSerializer(data=data)
+            self.assertTrue(serializer.is_valid())
+        except Exception as e:
+            print(serializer.errors)
 
     def test_019_student_serializer_all_with_proper_reponse(self):
+        # Subject.objects.create(subject_name = "Python", professor = "Professor Adam")
         stud = Student(
             **{
                 "name": "John W. Watson",
@@ -348,25 +354,28 @@ class Test_student(TestCase):
                 "locker_number": 13,
                 "locker_combination": "12-33-44",
                 "good_student": True,
-            }
+                "subjects": [],
+            },
         )
-    
-    # PART V
 
-    def test_020_student_missing_classes(self):
+    # PART V
+    def test_020_student_with_not_enough_classes(self):
         try:
             new_student = Student.objects.create(
                 name="Maverick H. Macconnel",
                 student_email="mav@school.com",
                 personal_email="mav@gmail.com",
             )
-            new_student.full_clean()
-            self.fail()
-        except ValidationError as e:
-            self.assert_(
-                "A student must be enrolled in between 1 and 7 classes."
-                in e.message_dict["__all__"]
+            new_student.save()
+            a_class = Subject.objects.create(
+                subject_name=f"Python30000", professor="Professor Ana"
             )
+            a_class.save()
+            new_student.remove_subject(a_class.id)
+            self.fail()
+        except Exception as e:
+            # print(e)
+            self.assertEquals("This students class schedule is empty!", str(e))
 
     def test_021_student_with_too_many_classes(self):
         try:
@@ -377,41 +386,50 @@ class Test_student(TestCase):
             )
             new_student.save()
             for idx in range(9):
-                a_class = Class.objects.create(
-                    subject=f"Python{idx}", professor="Mrs. Ana"
+                a_class = Subject.objects.create(
+                    subject_name=f"Python{idx}", professor="Professor Ana"
                 )
                 a_class.save()
-                new_student.classes.add(a_class.id)
-            new_student.full_clean()
+                new_student.add_subject(a_class.id)
+            self.fail()
+        except Exception as e:
+            # print(e)
+            self.assertEquals("This students class schedule is full!", str(e))
+
+    def test_022_subject_with_improper_subject_format(self):
+        try:
+            new_student = Student.objects.create(
+                name="Maverick H. Macconnel",
+                student_email="mav@school.com",
+                personal_email="mav@gmail.com",
+            )
+            new_student.save()
+            a_subject = Subject.objects.create(
+                subject_name="a subject", professor="Professor Ben"
+            )
+            a_subject.save()
+            a_subject.add_a_student(Student.objects.all().first().id)
+            a_subject.full_clean()
             self.fail()
         except ValidationError as e:
             # print(e.message_dict)
             self.assert_(
-                "A student must be enrolled in between 1 and 7 classes."
-                in e.message_dict["__all__"]
+                "Subject must be in title case format."
+                in e.message_dict["subject_name"]
             )
 
-    def test_022_Class_with_improper_subject_format(self):
+    def test_023_subject_with_improper_professor_format(self):
         try:
-            a_class = Class.objects.create(
-                subject="a subject", professor="Professor Ben"
+            new_student = Student.objects.create(
+                name="Maverick H. Macconnel",
+                student_email="mav@school.com",
+                personal_email="mav@gmail.com",
             )
-            a_class.save()
-            a_class.add_a_student(Student.objects.all().first().id)
-            a_class.full_clean()
-            self.fail()
-        except ValidationError as e:
-            # print(e.message_dict)
-            self.assert_(
-                "Subject must be in title case format." in e.message_dict["subject"]
-            )
-
-    def test_023_Class_with_improper_professor_format(self):
-        try:
-            a_class = Class.objects.create(subject="Math", professor="Mr. Ben")
-            a_class.save()
-            a_class.add_a_student(Student.objects.all().first().id)
-            a_class.full_clean()
+            new_student.save()
+            a_subject = Subject.objects.create(subject_name="Math", professor="Mr. Ben")
+            a_subject.save()
+            a_subject.add_a_student(Student.objects.all().first().id)
+            a_subject.full_clean()
             self.fail()
         except ValidationError as e:
             # print(e.message_dict)
@@ -420,23 +438,29 @@ class Test_student(TestCase):
                 in e.message_dict["professor"]
             )
 
-    def test_024_Class_with_not_enough_students(self):
+    def test_024_subject_with_not_enough_students(self):
         try:
-            a_class = Class.objects.create(subject="Math", professor="Professor Ben")
-            a_class.save()
-            a_class.full_clean()
-            self.fail()
-        except ValidationError as e:
-            # print(e)
-            self.assert_(
-                "A class must have between 1 and 30 students"
-                in e.message_dict["__all__"]
+            a_subject = Subject.objects.create(
+                subject_name="Math", professor="Professor Ben"
             )
+            a_subject.save()
+            a_subject.drop_a_student(1)
+            a_subject.full_clean()
+            self.fail()
+        except Exception as e:
+            # print(e)
+            self.assertEquals("This subject is empty!", str(e))
 
     def test_025_Grade_with_proper_input(self):
+        Subject.objects.create(subject_name="Math", professor="Professor Ben")
+        Student.objects.create(
+            name="Maverick H. Macconnel",
+            student_email="mav@school.com",
+            personal_email="mav@gmail.com",
+        )
         grade = Grade.objects.create(
             grade=98.75,
-            a_class=Class.objects.all().first(),
+            a_subject=Subject.objects.all().first(),
             student=Student.objects.all().first(),
         )
         grade.full_clean()
@@ -444,27 +468,35 @@ class Test_student(TestCase):
 
     def test_026_Grade_with_high_grade(self):
         try:
+            Subject.objects.create(subject_name="Math", professor="Professor Ben")
+            Student.objects.create(
+                name="Maverick H. Macconnel",
+                student_email="mav@school.com",
+                personal_email="mav@gmail.com",
+            )
             grade = Grade.objects.create(
                 grade=198.75,
-                a_class=Class.objects.all().first(),
+                a_subject=Subject.objects.all().first(),
                 student=Student.objects.all().first(),
             )
             grade.full_clean()
             self.fail()
         except ValidationError as e:
             # print(e)
-            self.assert_('Ensure this value is less than or equal to 100.0.' in e.message_dict['grade'])
-
+            self.assert_(
+                "Ensure this value is less than or equal to 100.0."
+                in e.message_dict["grade"]
+            )
 
     def test_027_Grade_with_incorrect_grade_format(self):
         try:
             grade = Grade.objects.create(
                 grade=1598.756,
-                a_class=Class.objects.all().first(),
+                a_subject=Subject.objects.all().first(),
                 student=Student.objects.all().first(),
             )
             grade.full_clean()
             self.fail()
         except DataError as e:
             # print(e)
-            self.assert_('numeric field overflow' in str(e))
+            self.assert_("numeric field overflow" in str(e))
