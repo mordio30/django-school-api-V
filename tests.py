@@ -1,7 +1,7 @@
 from django.test import TestCase
 from .models import Student
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, DataError
 from .serializers import StudentAllSerializer, StudentSerializer
 
 
@@ -350,3 +350,121 @@ class Test_student(TestCase):
                 "good_student": True,
             }
         )
+    
+    # PART V
+
+    def test_020_student_missing_classes(self):
+        try:
+            new_student = Student.objects.create(
+                name="Maverick H. Macconnel",
+                student_email="mav@school.com",
+                personal_email="mav@gmail.com",
+            )
+            new_student.full_clean()
+            self.fail()
+        except ValidationError as e:
+            self.assert_(
+                "A student must be enrolled in between 1 and 7 classes."
+                in e.message_dict["__all__"]
+            )
+
+    def test_021_student_with_too_many_classes(self):
+        try:
+            new_student = Student.objects.create(
+                name="Maverick H. Macconnel",
+                student_email="mav@school.com",
+                personal_email="mav@gmail.com",
+            )
+            new_student.save()
+            for idx in range(9):
+                a_class = Class.objects.create(
+                    subject=f"Python{idx}", professor="Mrs. Ana"
+                )
+                a_class.save()
+                new_student.classes.add(a_class.id)
+            new_student.full_clean()
+            self.fail()
+        except ValidationError as e:
+            # print(e.message_dict)
+            self.assert_(
+                "A student must be enrolled in between 1 and 7 classes."
+                in e.message_dict["__all__"]
+            )
+
+    def test_022_Class_with_improper_subject_format(self):
+        try:
+            a_class = Class.objects.create(
+                subject="a subject", professor="Professor Ben"
+            )
+            a_class.save()
+            a_class.add_a_student(Student.objects.all().first().id)
+            a_class.full_clean()
+            self.fail()
+        except ValidationError as e:
+            # print(e.message_dict)
+            self.assert_(
+                "Subject must be in title case format." in e.message_dict["subject"]
+            )
+
+    def test_023_Class_with_improper_professor_format(self):
+        try:
+            a_class = Class.objects.create(subject="Math", professor="Mr. Ben")
+            a_class.save()
+            a_class.add_a_student(Student.objects.all().first().id)
+            a_class.full_clean()
+            self.fail()
+        except ValidationError as e:
+            # print(e.message_dict)
+            self.assert_(
+                'Professor name must be in the format "Professor Adam".'
+                in e.message_dict["professor"]
+            )
+
+    def test_024_Class_with_not_enough_students(self):
+        try:
+            a_class = Class.objects.create(subject="Math", professor="Professor Ben")
+            a_class.save()
+            a_class.full_clean()
+            self.fail()
+        except ValidationError as e:
+            # print(e)
+            self.assert_(
+                "A class must have between 1 and 30 students"
+                in e.message_dict["__all__"]
+            )
+
+    def test_025_Grade_with_proper_input(self):
+        grade = Grade.objects.create(
+            grade=98.75,
+            a_class=Class.objects.all().first(),
+            student=Student.objects.all().first(),
+        )
+        grade.full_clean()
+        self.assertIsNotNone(grade)
+
+    def test_026_Grade_with_high_grade(self):
+        try:
+            grade = Grade.objects.create(
+                grade=198.75,
+                a_class=Class.objects.all().first(),
+                student=Student.objects.all().first(),
+            )
+            grade.full_clean()
+            self.fail()
+        except ValidationError as e:
+            # print(e)
+            self.assert_('Ensure this value is less than or equal to 100.0.' in e.message_dict['grade'])
+
+
+    def test_027_Grade_with_incorrect_grade_format(self):
+        try:
+            grade = Grade.objects.create(
+                grade=1598.756,
+                a_class=Class.objects.all().first(),
+                student=Student.objects.all().first(),
+            )
+            grade.full_clean()
+            self.fail()
+        except DataError as e:
+            # print(e)
+            self.assert_('numeric field overflow' in str(e))
